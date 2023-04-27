@@ -1,265 +1,123 @@
-Public Sub JYYL(a As Integer, b As Integer, c As Integer, d As Integer, e As Integer, S1 As String, S2 As String, S3 As String, S4 As String, S5 As String, S6 As String, S8 As String, _
-S9 As String, S10 As String, S11 As String, S18 As String, S19 As String, S20 As String, S22 As String, S23 As String, GJ As String, S24 As String, S25 As String)
-    'AE值为1设为开始更新标志
-    If Application.Cells(1, 31) = "1" Then
-        Dim Er As String
-        '遍历整张表
-        Dim i As Integer
-        For i = 2 To a
-            '清货/退货费用/清货调整
-            If Application.Cells(i, 3) = S10 Or Application.Cells(i, 3) = S19 Or Application.Cells(i, 3) = S11 Then
-                If Application.WorksheetFunction.IsError(Application.Match(Application.Cells(i, 5), Application.Sheets("FNSKU对应SKU").Range("A2:A" & b), 0)) = False Then
-                    '匹配清货/退货商品SKU
-                    Application.Cells(i, 31) = Application.VLookup(Application.Cells(i, 5), Application.Sheets("FNSKU对应SKU").Range("A2:B" & b), 2, False)
-                Else
-                    Application.Cells(i, 31) = "未匹配到"
-                    '提示有退货或者清货商品未匹配到
-                    Er = Er & "，有退货或者清货商品未匹配到"
-                End If
-                
-            'FBA库存赔偿
-            ElseIf Application.Cells(i, 3) = S18 Then
-                If Application.Cells(i, 6) = S1 Or Application.Cells(i, 6) = S2 Or Application.Cells(i, 6) = S3 Or Application.Cells(i, 6) = S4 Or _
-                Application.Cells(i, 6) = S20 Or Application.Cells(i, 6) = S22 Or Application.Cells(i, 6) = S23 Then
-                    If Application.WorksheetFunction.IsError(Application.Match(Application.Cells(i, 5), Application.Sheets("FBA商品成本").Range("A2:A" & c), 0)) = False _
-                    And Left(Application.Cells(i, 4), 1) <> "S" Then
-                        'FBA库存赔偿的采购成本
-                        Application.Cells(i, 32) = -Format(Application.VLookup(Application.Cells(i, 5), Application.Sheets("FBA商品成本").Range("A2:D" & c), 4, False) * Application.Cells(i, 7), "0.00")
-                        'FBA库存赔偿的头程成本
-                        Application.Cells(i, 33) = -Format(Application.VLookup(Application.Cells(i, 5), Application.Sheets("FBA商品成本").Range("A2:E" & c), 5, False) * Application.Cells(i, 7), "0.00")
-                    ElseIf Left(Application.Cells(i, 4), 1) = "S" Then
-                        Application.Cells(i, 32) = "清货丢失赔偿"
-                        Application.Cells(i, 33) = "清货丢失赔偿"
-                    Else
-                        Application.Cells(i, 32) = "未匹配到"
-                        Application.Cells(i, 33) = "未匹配到"
-                        
-                        '提示有库存赔偿商品未匹配到
-                        Er = Er & "，有库存赔偿商品未匹配到"
-                    End If
-                    
-                    'FBA库存赔偿合计
-                    Dim KCPC As Single
-                    If GJ = "US" Then
-                        KCPC = KCPC + Application.Cells(i, 29)
-                    ElseIf GJ = "CA" Then
-                        KCPC = KCPC + Application.Cells(i, 29)
-                    ElseIf GJ = "JP" Then
-                        KCPC = KCPC + Application.Cells(i, 28)
-                    ElseIf GJ = "DE" Or GJ = "FR" Or GJ = "ES" Or GJ = "IT" Then
-                        KCPC = KCPC + Application.Cells(i, 27)
-                    End If
-                    
-                'FBA库存赔偿退款
-                ElseIf Application.Cells(i, 6) = S5 Then
-                    If Application.WorksheetFunction.IsError(Application.Match(Application.Cells(i, 5), Application.Sheets("FBA商品成本").Range("A2:A" & c), 0)) = False Then
-                        'FBA库存赔偿退款的采购成本
-                        Application.Cells(i, 32) = Format(Application.VLookup(Application.Cells(i, 5), Application.Sheets("FBA商品成本").Range("A2:D" & c), 4, False) * Application.Cells(i, 7), "0.00")
-                        'FBA库存赔偿退款的头程成本
-                        Application.Cells(i, 33) = Format(Application.VLookup(Application.Cells(i, 5), Application.Sheets("FBA商品成本").Range("A2:E" & c), 5, False) * Application.Cells(i, 7), "0.00")
-                    Else
-                        Application.Cells(i, 32) = "未匹配到"
-                        Application.Cells(i, 33) = "未匹配到"
-                        Er = Er & "，有库存赔偿商品未匹配到"
-                    End If
-                    
-                    'FBA库存赔偿退款合计
-                    Dim KCPCTK As Single
-                    If GJ = "US" Then
-                        KCPCTK = KCPCTK + Application.Cells(i, 29)
-                    ElseIf GJ = "CA" Then
-                        KCPCTK = KCPCTK + Application.Cells(i, 29)
-                    ElseIf GJ = "JP" Then
-                        KCPCTK = KCPCTK + Application.Cells(i, 28)
-                    ElseIf GJ = "DE" Or GJ = "FR" Or GJ = "ES" Or GJ = "IT" Then
-                        KCPCTK = KCPCTK + Application.Cells(i, 27)
-                    End If
-                End If
-                 
-                '提示有库存赔偿采购为0
-                If Application.Cells(i, 32) = 0 Then
-                    Er = Er & "，有库存赔偿商品采购为0"
-                End If
-                
-                '提示有库存赔偿运费为0
-                If Application.Cells(i, 33) = 0 Then
-                    Er = Er & "，有库存赔偿商品运费为0"
-                End If
-                
-            '检查ERP导出订单是否完整
-            ElseIf Application.Cells(i, 3) = S6 Or Application.Cells(i, 3) = S24 Then
-                If GJ = "US" Then
-                    'FBA订单
-                    If Application.Cells(i, 10) = S8 Then
-                        Application.Cells(i, 34) = Application.Cells(i, 4) & "|" & Application.Cells(i, 5)
-                        Application.Cells(i, 35) = Application.Cells(i, 34) & "|" & Application.SumIfs(Application.Sheets("交易一览").Range("G2:G" & a), _
-                        Application.Sheets("交易一览").Range("AH2:AH" & a), Application.Cells(i, 34))
-                        Application.Cells(i, 36) = Application.IsNumber(Application.Match(Application.Cells(i, 35), Application.Sheets("ERP导出FBA数据").Range("J2:J" & d), 0))
-                    'FBM订单
-                    ElseIf Application.Cells(i, 10) = S9 Then
-                        Application.Cells(i, 35) = Application.Cells(i, 4) & "|" & Application.SumIfs(Application.Sheets("交易一览").Range("G2:G" & a), _
-                        Application.Sheets("交易一览").Range("C2:C" & a), S6, Application.Sheets("交易一览").Range("D2:D" & a), Application.Cells(i, 4))
-                        Application.Cells(i, 36) = Application.IsNumber(Application.Match(Application.Cells(i, 35), Application.Sheets("ERP导出FBM数据").Range("K2:K" & e), 0))
-                    
-                    End If
-                ElseIf GJ = "DE" Or GJ = "JP" Or GJ = "CA" Or GJ = "FR" Or GJ = "ES" Or GJ = "IT" Then
-                    'FBA订单
-                    If Application.Cells(i, 9) = S8 Then
-                        Application.Cells(i, 34) = Application.Cells(i, 4) & "|" & Application.Cells(i, 5)
-                        Application.Cells(i, 35) = Application.Cells(i, 34) & "|" & Application.SumIfs(Application.Sheets("交易一览").Range("G2:G" & a), _
-                        Application.Sheets("交易一览").Range("AH2:AH" & a), Application.Cells(i, 34))
-                        Application.Cells(i, 36) = Application.IsNumber(Application.Match(Application.Cells(i, 35), Application.Sheets("ERP导出FBA数据").Range("J2:J" & d), 0))
-                    'FBM订单
-                    ElseIf Application.Cells(i, 9) = S9 Then
-                        Application.Cells(i, 35) = Application.Cells(i, 4) & "|" & Application.SumIfs(Application.Sheets("交易一览").Range("G2:G" & a), _
-                        Application.Sheets("交易一览").Range("C2:C" & a), S6, Application.Sheets("交易一览").Range("D2:D" & a), Application.Cells(i, 4))
-                        Application.Cells(i, 36) = Application.IsNumber(Application.Match(Application.Cells(i, 35), Application.Sheets("ERP导出FBM数据").Range("K2:K" & e), 0))
-                    End If
-                End If
-            ElseIf Application.Cells(i, 3) = S25 Then
-                '匹配费用调整SKU
-                Application.Cells(i, 31) = Application.VLookup(Application.Cells(i, 4), Application.Sheets("交易一览").Range("D2:E" & a), 2, False)
-            End If
-        Next
-        
-        '汇总库存赔偿和库存赔偿退款
-        Application.Cells(1, 34) = Format(KCPC, "0.00")
-        Application.Cells(1, 35) = Format(KCPCTK, "0.00")
-        
-        '停止更新
-        MsgBox "更新完毕" & Er & Chr(10) & Chr(10) & "库存赔偿差额" & Format(KCPC - Application.Sheets("汇总").Range("F2"), "0.00") & Chr(10) & "库存赔偿退款差额" & Format(KCPCTK - Application.Sheets("汇总").Range("Q2"), "0.00")
-        Application.Cells(1, 31) = "0"
+Private Sub Workbook_SheetChange(ByVal Sh As Object, ByVal Target As Range)
+    'LB-23.04.24
+    Application.EnableEvents = False '暂停事件触发
+    
+    Dim lCalcSave As Long
+    Dim bScreenUpdate As Boolean
+
+
+    
+    'a1 - “单款利润”表总行数
+    Dim a1 As Integer
+    a1 = Application.Sheets("单款利润").Range("A300").End(xlUp).Row
+    
+    'a2 - 正常销售的产品最后一行行号
+    Dim a2 As Integer
+    a2 = Application.SumIfs(Application.Sheets("单款利润").Range("C3:C" & a1), Application.Sheets("单款利润").Range("C3:C" & a1), "=1") + _
+    Application.SumIfs(Application.Sheets("单款利润").Range("C3:C" & a1), Application.Sheets("单款利润").Range("C3:C" & a1), "=2") / 2 + 2
+    
+    'a3 - “交易一览”表总行数
+    Dim a3 As Integer
+    a3 = Application.Sheets("交易一览").Range("A30000").End(xlUp).Row
+    
+    'a4 - “ERP导出FBA数据”表总行数
+    Dim a4 As Integer
+    a4 = Application.Sheets("ERP导出FBA数据").Range("C30000").End(xlUp).Row
+    
+    'e - “ERP导出FBM数据”表总行数
+    Dim a5 As Integer
+    a5 = Application.Sheets("ERP导出FBM数据").Range("A5000").End(xlUp).Row
+    
+    'a6 - “广告费用”表总行数
+    Dim a6 As Integer
+    a6 = Application.Sheets("广告费用").Range("G20000").End(xlUp).Row
+    
+    'a7 - “FBA月度仓储费”表总行数
+    Dim a7 As Integer
+    a7 = Application.Sheets("FBA月度仓储费").Range("A5000").End(xlUp).Row
+    
+    'a8 - “FBA头程成本”表总行数
+    Dim a8 As Integer
+    a8 = Application.Sheets("FBA头程成本").Range("A2000").End(xlUp).Row
+    
+    'a9 - “退货订单”表总行数
+    Dim a9 As Integer
+    a9 = Application.Sheets("退货订单").Range("B5000").End(xlUp).Row
+
+    'a10 - “FBA商品成本”表总行数
+    Dim a10 As Integer
+    a10 = Application.Sheets("FBA商品成本").Range("A2000").End(xlUp).Row
+    
+    'a11 - “FNSKU对应SKU”表总行数
+    Dim a11 As Integer
+    a11 = Application.Sheets("FNSKU对应SKU").Range("A2000").End(xlUp).Row
+    
+    'a12 - “海外仓运费”表总行数
+    Dim a12 As Integer
+    a12 = Application.Sheets("海外仓运费").Range("C2000").End(xlUp).Row
+    
+    '提现汇率
+    Dim HL As Single
+    HL = Application.WorksheetFunction.RoundUp(Application.Sheets("汇总").Range("A5"), 4)
+    
+    '国家
+    GJ = Application.Sheets("汇总").Range("A6")
+    
+    '不同国家不同名称
+    Dim BTGJ()
+    '美国
+    If GJ = "US" Then
+        BTGJ = Application.Sheets("设置").Range("A1:A25").Value
+    '德国
+    ElseIf GJ = "DE" Then
+        BTGJ = Application.Sheets("设置").Range("B1:B25").Value
+    '法国
+    ElseIf GJ = "FR" Then
+        BTGJ = Application.Sheets("设置").Range("E1:E25").Value
+    '西班牙
+    ElseIf GJ = "ES" Then
+        BTGJ = Application.Sheets("设置").Range("F1:F25").Value
+    '意大利
+    ElseIf GJ = "IT" Then
+        BTGJ = Application.Sheets("设置").Range("G1:G25").Value
+    '日本
+    ElseIf GJ = "JP" Then
+        BTGJ = Application.Sheets("设置").Range("C1:C25").Value
+    '加拿大
+    ElseIf GJ = "CA" Then
+        BTGJ = Application.Sheets("设置").Range("D1:D25").Value
     End If
-End SubPublic Sub JYYL(a As Integer, b As Integer, c As Integer, d As Integer, e As Integer, S1 As String, S2 As String, S3 As String, S4 As String, S5 As String, S6 As String, S8 As String, _
-S9 As String, S10 As String, S11 As String, S18 As String, S19 As String, S20 As String, S22 As String, S23 As String, GJ As String, S24 As String, S25 As String)
-    'AE值为1设为开始更新标志
-    If Application.Cells(1, 31) = "1" Then
-        Dim Er As String
-        '遍历整张表
-        Dim i As Integer
-        For i = 2 To a
-            '清货/退货费用/清货调整
-            If Application.Cells(i, 3) = S10 Or Application.Cells(i, 3) = S19 Or Application.Cells(i, 3) = S11 Then
-                If Application.WorksheetFunction.IsError(Application.Match(Application.Cells(i, 5), Application.Sheets("FNSKU对应SKU").Range("A2:A" & b), 0)) = False Then
-                    '匹配清货/退货商品SKU
-                    Application.Cells(i, 31) = Application.VLookup(Application.Cells(i, 5), Application.Sheets("FNSKU对应SKU").Range("A2:B" & b), 2, False)
-                Else
-                    Application.Cells(i, 31) = "未匹配到"
-                    '提示有退货或者清货商品未匹配到
-                    Er = Er & "，有退货或者清货商品未匹配到"
-                End If
-                
-            'FBA库存赔偿
-            ElseIf Application.Cells(i, 3) = S18 Then
-                If Application.Cells(i, 6) = S1 Or Application.Cells(i, 6) = S2 Or Application.Cells(i, 6) = S3 Or Application.Cells(i, 6) = S4 Or _
-                Application.Cells(i, 6) = S20 Or Application.Cells(i, 6) = S22 Or Application.Cells(i, 6) = S23 Then
-                    If Application.WorksheetFunction.IsError(Application.Match(Application.Cells(i, 5), Application.Sheets("FBA商品成本").Range("A2:A" & c), 0)) = False _
-                    And Left(Application.Cells(i, 4), 1) <> "S" Then
-                        'FBA库存赔偿的采购成本
-                        Application.Cells(i, 32) = -Format(Application.VLookup(Application.Cells(i, 5), Application.Sheets("FBA商品成本").Range("A2:D" & c), 4, False) * Application.Cells(i, 7), "0.00")
-                        'FBA库存赔偿的头程成本
-                        Application.Cells(i, 33) = -Format(Application.VLookup(Application.Cells(i, 5), Application.Sheets("FBA商品成本").Range("A2:E" & c), 5, False) * Application.Cells(i, 7), "0.00")
-                    ElseIf Left(Application.Cells(i, 4), 1) = "S" Then
-                        Application.Cells(i, 32) = "清货丢失赔偿"
-                        Application.Cells(i, 33) = "清货丢失赔偿"
-                    Else
-                        Application.Cells(i, 32) = "未匹配到"
-                        Application.Cells(i, 33) = "未匹配到"
-                        
-                        '提示有库存赔偿商品未匹配到
-                        Er = Er & "，有库存赔偿商品未匹配到"
-                    End If
-                    
-                    'FBA库存赔偿合计
-                    Dim KCPC As Single
-                    If GJ = "US" Then
-                        KCPC = KCPC + Application.Cells(i, 29)
-                    ElseIf GJ = "CA" Then
-                        KCPC = KCPC + Application.Cells(i, 29)
-                    ElseIf GJ = "JP" Then
-                        KCPC = KCPC + Application.Cells(i, 28)
-                    ElseIf GJ = "DE" Or GJ = "FR" Or GJ = "ES" Or GJ = "IT" Then
-                        KCPC = KCPC + Application.Cells(i, 27)
-                    End If
-                    
-                'FBA库存赔偿退款
-                ElseIf Application.Cells(i, 6) = S5 Then
-                    If Application.WorksheetFunction.IsError(Application.Match(Application.Cells(i, 5), Application.Sheets("FBA商品成本").Range("A2:A" & c), 0)) = False Then
-                        'FBA库存赔偿退款的采购成本
-                        Application.Cells(i, 32) = Format(Application.VLookup(Application.Cells(i, 5), Application.Sheets("FBA商品成本").Range("A2:D" & c), 4, False) * Application.Cells(i, 7), "0.00")
-                        'FBA库存赔偿退款的头程成本
-                        Application.Cells(i, 33) = Format(Application.VLookup(Application.Cells(i, 5), Application.Sheets("FBA商品成本").Range("A2:E" & c), 5, False) * Application.Cells(i, 7), "0.00")
-                    Else
-                        Application.Cells(i, 32) = "未匹配到"
-                        Application.Cells(i, 33) = "未匹配到"
-                        Er = Er & "，有库存赔偿商品未匹配到"
-                    End If
-                    
-                    'FBA库存赔偿退款合计
-                    Dim KCPCTK As Single
-                    If GJ = "US" Then
-                        KCPCTK = KCPCTK + Application.Cells(i, 29)
-                    ElseIf GJ = "CA" Then
-                        KCPCTK = KCPCTK + Application.Cells(i, 29)
-                    ElseIf GJ = "JP" Then
-                        KCPCTK = KCPCTK + Application.Cells(i, 28)
-                    ElseIf GJ = "DE" Or GJ = "FR" Or GJ = "ES" Or GJ = "IT" Then
-                        KCPCTK = KCPCTK + Application.Cells(i, 27)
-                    End If
-                End If
-                 
-                '提示有库存赔偿采购为0
-                If Application.Cells(i, 32) = 0 Then
-                    Er = Er & "，有库存赔偿商品采购为0"
-                End If
-                
-                '提示有库存赔偿运费为0
-                If Application.Cells(i, 33) = 0 Then
-                    Er = Er & "，有库存赔偿商品运费为0"
-                End If
-                
-            '检查ERP导出订单是否完整
-            ElseIf Application.Cells(i, 3) = S6 Or Application.Cells(i, 3) = S24 Then
-                If GJ = "US" Then
-                    'FBA订单
-                    If Application.Cells(i, 10) = S8 Then
-                        Application.Cells(i, 34) = Application.Cells(i, 4) & "|" & Application.Cells(i, 5)
-                        Application.Cells(i, 35) = Application.Cells(i, 34) & "|" & Application.SumIfs(Application.Sheets("交易一览").Range("G2:G" & a), _
-                        Application.Sheets("交易一览").Range("AH2:AH" & a), Application.Cells(i, 34))
-                        Application.Cells(i, 36) = Application.IsNumber(Application.Match(Application.Cells(i, 35), Application.Sheets("ERP导出FBA数据").Range("J2:J" & d), 0))
-                    'FBM订单
-                    ElseIf Application.Cells(i, 10) = S9 Then
-                        Application.Cells(i, 35) = Application.Cells(i, 4) & "|" & Application.SumIfs(Application.Sheets("交易一览").Range("G2:G" & a), _
-                        Application.Sheets("交易一览").Range("C2:C" & a), S6, Application.Sheets("交易一览").Range("D2:D" & a), Application.Cells(i, 4))
-                        Application.Cells(i, 36) = Application.IsNumber(Application.Match(Application.Cells(i, 35), Application.Sheets("ERP导出FBM数据").Range("K2:K" & e), 0))
-                    
-                    End If
-                ElseIf GJ = "DE" Or GJ = "JP" Or GJ = "CA" Or GJ = "FR" Or GJ = "ES" Or GJ = "IT" Then
-                    'FBA订单
-                    If Application.Cells(i, 9) = S8 Then
-                        Application.Cells(i, 34) = Application.Cells(i, 4) & "|" & Application.Cells(i, 5)
-                        Application.Cells(i, 35) = Application.Cells(i, 34) & "|" & Application.SumIfs(Application.Sheets("交易一览").Range("G2:G" & a), _
-                        Application.Sheets("交易一览").Range("AH2:AH" & a), Application.Cells(i, 34))
-                        Application.Cells(i, 36) = Application.IsNumber(Application.Match(Application.Cells(i, 35), Application.Sheets("ERP导出FBA数据").Range("J2:J" & d), 0))
-                    'FBM订单
-                    ElseIf Application.Cells(i, 9) = S9 Then
-                        Application.Cells(i, 35) = Application.Cells(i, 4) & "|" & Application.SumIfs(Application.Sheets("交易一览").Range("G2:G" & a), _
-                        Application.Sheets("交易一览").Range("C2:C" & a), S6, Application.Sheets("交易一览").Range("D2:D" & a), Application.Cells(i, 4))
-                        Application.Cells(i, 36) = Application.IsNumber(Application.Match(Application.Cells(i, 35), Application.Sheets("ERP导出FBM数据").Range("K2:K" & e), 0))
-                    End If
-                End If
-            ElseIf Application.Cells(i, 3) = S25 Then
-                '匹配费用调整SKU
-                Application.Cells(i, 31) = Application.VLookup(Application.Cells(i, 4), Application.Sheets("交易一览").Range("D2:E" & a), 2, False)
-            End If
-        Next
+    
+    '“FBA月度仓储费”表触发 - a7
+    If InStr(Sh.Name, "FBA月度仓储费") Then
+        Call YDCCF(a7, a3, CStr(BTGJ(6, 1)), CStr(BTGJ(7, 1)))
         
-        '汇总库存赔偿和库存赔偿退款
-        Application.Cells(1, 34) = Format(KCPC, "0.00")
-        Application.Cells(1, 35) = Format(KCPCTK, "0.00")
+    '“ERP导出FBM数据”表触发 - a5
+    ElseIf InStr(Sh.Name, "ERP导出FBM数据") Then
+        Call FBM(a5, a10, a12, HL)
+
+    '“ERP导出FBA数据”表触发 - a4
+    ElseIf InStr(Sh.Name, "ERP导出FBA数据") Then
+        Call FBA(a4, a9, a3, a10, a8)
+
+    '“FBA商品成本”表触发
+    ElseIf InStr(Sh.Name, "FBA商品成本") Then
+        Call SPCB(a10, a4)
+
+    '“交易一览”表触发
+    ElseIf InStr(Sh.Name, "交易一览") Then
+        Call JYYL(a3, a11, a10, a4, a5, CStr(BTGJ(1, 1)), CStr(BTGJ(2, 1)), CStr(BTGJ(3, 1)), CStr(BTGJ(4, 1)), CStr(BTGJ(5, 1)), CStr(BTGJ(6, 1)), CStr(BTGJ(8, 1)), CStr(BTGJ(9, 1)), _
+        CStr(BTGJ(10, 1)), CStr(BTGJ(11, 1)), CStr(BTGJ(18, 1)), CStr(BTGJ(19, 1)), CStr(BTGJ(20, 1)), CStr(BTGJ(22, 1)), CStr(BTGJ(23, 1)), CStr(GJ), CStr(BTGJ(24, 1)), CStr(BTGJ(12, 1)))
         
-        '停止更新
-        MsgBox "更新完毕" & Er & Chr(10) & Chr(10) & "库存赔偿差额" & Format(KCPC - Application.Sheets("汇总").Range("F2"), "0.00") & Chr(10) & "库存赔偿退款差额" & Format(KCPCTK - Application.Sheets("汇总").Range("Q2"), "0.00")
-        Application.Cells(1, 31) = "0"
+    '“汇总”表触发
+    ElseIf InStr(Sh.Name, "汇总") Then
+        Call HZ(a3, a6, a4, a5, HL)
+        
+    '“单款利润”表触发
+    ElseIf InStr(Sh.Name, "单款利润") Then
+        Call DKLR(a1, a2, a3, a4, a5, a6, a7, HL, CStr(BTGJ(6, 1)), CStr(BTGJ(7, 1)), CStr(BTGJ(8, 1)), CStr(BTGJ(9, 1)), CStr(BTGJ(10, 1)), CStr(BTGJ(11, 1)), CStr(BTGJ(12, 1)), _
+        CStr(BTGJ(13, 1)), CStr(BTGJ(14, 1)), CStr(BTGJ(15, 1)), CStr(BTGJ(16, 1)), CStr(BTGJ(17, 1)), CStr(BTGJ(19, 1)), CStr(BTGJ(21, 1)), CStr(GJ), CStr(BTGJ(24, 1)), CStr(BTGJ(25, 1)))
     End If
+    
+    Application.EnableEvents = True '恢复事件触发
 End Sub
