@@ -1,6 +1,6 @@
 Private Sub Workbook_SheetChange(ByVal Sh As Object, ByVal Target As Range)
     'LB-23.04.24
-    Application.EnableEvents = False '暂停事件触发
+    SwitchOff (True) '关闭一些不必要的功能，比如动画，屏幕更新，自动计算和事件
     
     Dim lCalcSave As Long
     Dim bScreenUpdate As Boolean
@@ -119,5 +119,28 @@ Private Sub Workbook_SheetChange(ByVal Sh As Object, ByVal Target As Range)
         CStr(BTGJ(13, 1)), CStr(BTGJ(14, 1)), CStr(BTGJ(15, 1)), CStr(BTGJ(16, 1)), CStr(BTGJ(17, 1)), CStr(BTGJ(19, 1)), CStr(BTGJ(21, 1)), CStr(GJ), CStr(BTGJ(24, 1)), CStr(BTGJ(25, 1)))
     End If
     
-    Application.EnableEvents = True '恢复事件触发
+    SwitchOff (False) '恢复一些不必要的功能，比如动画，屏幕更新，自动计算和事件
+End Sub
+Dim lCalcSave As Long
+Dim bScreenUpdate As Boolean
+Sub SwitchOff(bSwitchOff As Boolean)
+  Dim ws As Worksheet
+  With Application
+  If bSwitchOff Then ' OFF
+    lCalcSave = .Calculation
+    bScreenUpdate = .ScreenUpdating
+    .Calculation = xlCalculationManual
+    .ScreenUpdating = False
+    .EnableAnimations = False
+
+    ' switch off display pagebreaks for all worksheets
+    For Each ws In ActiveWorkbook.Worksheets
+      ws.DisplayPageBreaks = False
+    Next ws
+  Else ' ON
+    If .Calculation <> lCalcSave And lCalcSave <> 0 Then .Calculation = lCalcSave
+    .ScreenUpdating = bScreenUpdate
+    .EnableAnimations = True
+  End If
+  End With
 End Sub
