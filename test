@@ -1,0 +1,77 @@
+ Public Sub HZ(a As Integer, b As Integer, c As Integer, d As Integer, HL As Single)
+        'T5值为1设为开始更新标志
+        If Application.Cells(5, 20) = "1" Then
+            '库存赔偿修正
+            Application.Cells(2, 21) = Format(Application.Sum(Application.Sheets("交易一览").Range("AF2:AF" & a)) / HL + Application.Sum(Application.Sheets("交易一览").Range("AG2:AG" & a)) / HL, "0.00")
+            '广告修正
+            Application.Cells(2, 22) = Format(-Application.Sum(Application.Sheets("广告费用").Range("M2:M" & b)) - Application.Cells(2, 18), "0.00")
+            '头程汇总
+            Application.Cells(2, 23) = Format(-Application.SumIfs(Application.Sheets("ERP导出FBA数据").Range("F2:F" & c), Application.Sheets("ERP导出FBA数据").Range("G2:G" & c), "<>有退货") / HL, "0.00")
+            'FBM运费汇总
+            Application.Cells(2, 24) = Format(-Application.SumIfs(Application.Sheets("ERP导出FBM数据").Range("F2:F" & d), Application.Sheets("ERP导出FBM数据").Range("G2:G" & d), "=已发货") / HL, "0.00")
+            '采购汇总
+            Application.Cells(2, 25) = Format(-Application.SumIfs(Application.Sheets("ERP导出FBM数据").Range("E2:E" & d), Application.Sheets("ERP导出FBM数据").Range("G2:G" & d), "=已发货") / HL _
+            - Application.SumIfs(Application.Sheets("ERP导出FBA数据").Range("E2:E" & c), Application.Sheets("ERP导出FBA数据").Range("G2:G" & c), "<>有退货") / HL, "0.00")
+            
+            '国家
+            GJ = Application.Cells(6, 1)
+            'AGL修正
+            If GJ = "US" Then
+                Application.Cells(2, 26) = -Format(Application.SumIfs(Application.Sheets("交易一览").Range("AD2:AD" & a), Application.Sheets("交易一览").Range("F2:F" & a), "=FBA International Freight Shipping Charge") + _
+                Application.SumIfs(Application.Sheets("交易一览").Range("AD2:AD" & a), Application.Sheets("交易一览").Range("F2:F" & a), "=FBA International Freight Duties and Taxes Charge") + _
+                Application.SumIfs(Application.Sheets("交易一览").Range("AD2:AD" & a), Application.Sheets("交易一览").Range("F2:F" & a), "=FBA Amazon-Partnered Carrier Shipment Fee"), "0.00")
+            ElseIf GJ = "CA" Or GJ = "JP" Then
+                Application.Cells(2, 26) = 0
+            End If
+            
+            
+            '收入10项全部填写
+            If Application.IsNumber(Application.Cells(2, 2)) = True And Application.IsNumber(Application.Cells(2, 3)) = True And Application.IsNumber(Application.Cells(2, 4)) = True _
+            And Application.IsNumber(Application.Cells(2, 5)) = True And Application.IsNumber(Application.Cells(2, 6)) = True And Application.IsNumber(Application.Cells(2, 7)) = True _
+            And Application.IsNumber(Application.Cells(2, 8)) = True And Application.IsNumber(Application.Cells(2, 9)) = True And Application.IsNumber(Application.Cells(2, 10)) = True _
+            And Application.IsNumber(Application.Cells(2, 11)) = True Then
+                '收入汇总
+                Dim SR As Double
+                SR = Application.Sum(Range(Application.Cells(2, 2), Application.Cells(2, 11)))
+                Application.Cells(5, 2) = SR
+                '退款汇总
+                Application.Cells(2, 29) = Format(Application.Cells(2, 3) + Application.Cells(2, 5), "0.00")
+                '销售汇总
+                Application.Cells(2, 30) = Format(Application.Cells(2, 2) + Application.Cells(2, 4), "0.00")
+                '退款占比
+                Application.Cells(2, 31) = Format(Application.Cells(2, 29) / Application.Cells(2, 30), "0.00%")
+            End If
+            
+            '支出9项全部填写
+            If Application.IsNumber(Application.Cells(2, 12)) = True And Application.IsNumber(Application.Cells(2, 13)) = True And Application.IsNumber(Application.Cells(2, 14)) = True _
+            And Application.IsNumber(Application.Cells(2, 15)) = True And Application.IsNumber(Application.Cells(2, 16)) = True And Application.IsNumber(Application.Cells(2, 17)) = True _
+            And Application.IsNumber(Application.Cells(2, 18)) = True And Application.IsNumber(Application.Cells(2, 19)) = True Then
+                '支出汇总
+                Application.Cells(5, 12) = Application.Sum(Range(Application.Cells(2, 12), Application.Cells(2, 19)))
+                '其他7项支出全部填写
+                If Application.IsNumber(Application.Cells(2, 20)) = True And Application.IsNumber(Application.Cells(2, 21)) = True And Application.IsNumber(Application.Cells(2, 22)) = True _
+                And Application.IsNumber(Application.Cells(2, 23)) = True And Application.IsNumber(Application.Cells(2, 24)) = True And Application.IsNumber(Application.Cells(2, 25)) = True _
+                And Application.IsNumber(Application.Cells(2, 26)) = True Then
+                    Dim i As Integer
+                    '计算各项支出的收入占比
+                    For i = 12 To 26
+                    Application.Cells(3, i) = -Application.Cells(2, i) / SR
+                    Next
+                    
+                    '支出占比汇总
+                    Application.Cells(4, 20) = Application.Sum(Range(Application.Cells(3, 12), Application.Cells(3, 20)))
+                    Application.Cells(4, 21) = Application.Sum(Range(Application.Cells(3, 21), Application.Cells(3, 26)))
+                    '利润汇总
+                    Application.Cells(2, 27) = Application.Sum(Range(Application.Cells(2, 2), Application.Cells(2, 26))) + Application.Cells(5, 29) / HL
+                    '利润占比
+                    Application.Cells(3, 27) = Application.Cells(2, 27) / SR
+                    '利润折算人民币
+                    Application.Cells(2, 28) = Format(Application.Cells(2, 27) * HL, "0.00")
+                End If
+            End If
+            
+            '停止更新
+            MsgBox "更新完毕"
+            Application.Cells(5, 20) = "0"
+        End If
+End Sub
